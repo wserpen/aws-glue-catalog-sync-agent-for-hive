@@ -1,12 +1,12 @@
 package com.amazonaws.services.glue.catalog;
 
 import static org.apache.hadoop.hive.metastore.api.hive_metastoreConstants.META_TABLE_STORAGE;
-import static org.apache.hadoop.hive.ql.exec.DDLTask.appendSerdeParams;
-
+import static org.apache.hadoop.hive.metastore.MetaStoreUtils.DEFAULT_SERIALIZATION_FORMAT;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +34,7 @@ public class HiveUtils {
 	// reusing.
 	// License: Apache-2.0
 	// File:
-	// https://github.com/apache/hive/blob/259db56e359990a1c2830045c423453ed65b76fc/ql/src/java/org/apache/hadoop/hive/ql/exec/DDLTask.java
+	// https://github.com/apache/hive/blob/branch-2.3/ql/src/java/org/apache/hadoop/hive/ql/exec/DDLTask.java
 	protected static String propertiesToString(Map<String, String> props, List<String> exclude) {
 		String prop_string = "";
 		if (!props.isEmpty()) {
@@ -54,7 +54,7 @@ public class HiveUtils {
 	// reusing.
 	// License: Apache-2.0
 	// File:
-	// https://github.com/apache/hive/blob/259db56e359990a1c2830045c423453ed65b76fc/ql/src/java/org/apache/hadoop/hive/ql/exec/DDLTask.java
+	// https://github.com/apache/hive/blob/branch-2.3/ql/src/java/org/apache/hadoop/hive/ql/exec/DDLTask.java
 	protected static String showCreateTable(org.apache.hadoop.hive.metastore.api.Table msTbl) throws HiveException {
 		final String EXTERNAL = "external";
 		final String TEMPORARY = "temporary";
@@ -200,7 +200,7 @@ public class HiveUtils {
 				// If serialization.format property has the default value, it will not to be
 				// included in
 				// SERDE properties
-				if (Warehouse.DEFAULT_SERIALIZATION_FORMAT
+				if (DEFAULT_SERIALIZATION_FORMAT
 						.equals(serdeParams.get(serdeConstants.SERIALIZATION_FORMAT))) {
 					serdeParams.remove(serdeConstants.SERIALIZATION_FORMAT);
 				}
@@ -251,6 +251,23 @@ public class HiveUtils {
 		}
 
 		return retVal;
+	}
+
+	// Copied from Hive's code, it's a private function so had to copy it instead of
+	// reusing.
+	// License: Apache-2.0
+	// File:
+	// https://github.com/apache/hive/blob/branch-2.3/ql/src/java/org/apache/hadoop/hive/ql/exec/DDLTask.java
+	public static StringBuilder appendSerdeParams(StringBuilder builder, Map<String, String> serdeParam) {
+		serdeParam = new TreeMap<String, String>(serdeParam);
+		builder.append("WITH SERDEPROPERTIES ( \n");
+		List<String> serdeCols = new ArrayList<String>();
+		for (Entry<String, String> entry : serdeParam.entrySet()) {
+			serdeCols.add("  '" + entry.getKey() + "'='"
+			+ HiveStringUtils.escapeHiveCommand(entry.getValue()) + "'");
+		}
+		builder.append(StringUtils.join(serdeCols, ", \n")).append(')');
+		return builder;
 	}
 
 }
