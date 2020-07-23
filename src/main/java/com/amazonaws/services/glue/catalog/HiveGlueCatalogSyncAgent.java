@@ -351,7 +351,7 @@ public class HiveGlueCatalogSyncAgent extends MetaStoreEventListener {
 						if (p.getSd().getLocation().startsWith("s3")) {
 							String addPartitionDDL = String.format(
 									"alter table %s add if not exists partition(%s) location '%s'", fqtn, partitionSpec,
-									p.getSd().getLocation());
+									p.getSd().getLocation().replaceFirst("s3[a,n]://", "s3://"));
 							if (!addToAthenaQueue(addPartitionDDL)) {
 								LOG.error("Failed to add the AddPartition event to the processing queue");
 							}
